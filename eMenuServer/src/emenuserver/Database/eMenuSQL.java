@@ -95,8 +95,7 @@ public class eMenuSQL {
         try {
         Connection con = this.Connect();
         if(con != null) {
-            String query = "SELECT DISTINCT TOP (100) PERCENT dbo.[Drug Section].Id, dbo.[Drug Section].SortOrder, dbo.[Drug Section].Name FROM dbo.[Trade Names] INNER JOIN dbo.[Drug Section] ON dbo.[Trade Names].Section = dbo.[Drug Section].Id INNER JOIN dbo.Categories ON dbo.[Trade Names].Category = dbo.Categories.Id WHERE ((dbo.[Drug Section].Name IS Not NULL) OR (dbo.[Drug Section].Name<>N'')) AND (dbo.[Trade Names].Flag in(2,3,5,6)) AND ((dbo.[Trade Names].BarCode IS NULL) OR (dbo.[Trade Names].BarCode=N'')) AND (dbo.[Drug Section].Id<>0) Order By dbo.[Drug Section].SortOrder";
-           
+            String query = "SELECT DISTINCT TOP (100) PERCENT dbo.[Drug Section].Id, dbo.[Drug Section].SortOrder, dbo.[Drug Section].Name FROM dbo.[Trade Names] INNER JOIN dbo.[Drug Section] ON dbo.[Trade Names].Section = dbo.[Drug Section].Id INNER JOIN dbo.Categories ON dbo.[Trade Names].Category = dbo.Categories.Id WHERE ((dbo.[Drug Section].Name IS Not NULL) OR (dbo.[Drug Section].Name<>N'')) AND (dbo.[Trade Names].Flag in(1,2,3,5,6)) AND ((dbo.[Trade Names].BarCode IS NULL) OR (dbo.[Trade Names].BarCode=N'')) AND (dbo.[Drug Section].Id<>0) Order By dbo.[Drug Section].SortOrder";
             try (Statement stmt = con.createStatement()) {
                 ResultSet rs = stmt.executeQuery(query);
                 while(rs.next()) {

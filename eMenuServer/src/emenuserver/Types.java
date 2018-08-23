@@ -25,5 +25,6 @@ public class Types {
     {
         public static final int Cafe = 1;
         public static final int Store = 2;
+        public static final int CLIENT = 3;
     }
 }
