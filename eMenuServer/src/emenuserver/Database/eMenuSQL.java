@@ -5,6 +5,10 @@ import emenuserver.PrintOrder;
 import java.io.IOException;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Date;
@@ -16,7 +20,7 @@ import net.sf.dynamicreports.report.datasource.DRDataSource;
 public class eMenuSQL {
     
     String dbName;
-    String defaultDBName = "ESISoft";
+    String defaultDBName = "Merchents";
     public eMenuSQL(String name) {
         this.dbName = name;
     }
@@ -32,8 +36,8 @@ public class eMenuSQL {
     
     public Connection ConnectToMain() throws SQLException
     {
-        //Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=ESISoft;user=sa;password=AbdulRahman02^InsafMousa02^");
-        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=ESISoft;user=sa;password=AbdulRahman02^");
+        //Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ defaultDBName +";user=sa;password=AbdulRahman02^InsafMousa02^");
+        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=" + defaultDBName + ";user=sa;password=AbdulRahman02^");
         if(con != null) {
             return con;
         } else {
@@ -762,139 +766,30 @@ public class eMenuSQL {
         return -1;
     }
     
-    public boolean insertNewOrderD(int cstId, JSONArray items, MainWindow caller, boolean isTakeAway, double cost) {
+    public boolean insertNewOrderD(int invoiceId, MainWindow caller, double cost) {
         try {
-                    Connection con = this.ConnectToMain();
-                    int invoiceId = getNextIdMain("Invoice_Order");
-                    int cstID = getCstIDWithName(dbName);
-                    String invoiceValues = "'" + invoiceId + "',";
-                    if(isTakeAway)
-                        invoiceValues += "'"+ getNextCO(0) +"',";
-                    else
-                        invoiceValues += "'"+ getNextCO(1) +"',";
-                    invoiceValues += "'"+cstId+"',";
-                    invoiceValues += "'1',";
-                    invoiceValues += "'0',";
-                    invoiceValues += "'1',";
-                    invoiceValues += "'5',";
-                    invoiceValues += "'0',";
-                    if(isTakeAway)
-                        invoiceValues += "'0',";
-                    else
-                        invoiceValues += "'1',";
-                    invoiceValues += "'1',";
-                    invoiceValues +="'" + cost + "',";
-                    invoiceValues +="'" + cstID + "'";
-                    String query1 = "INSERT INTO Invoice_Order (ID, CO, Cust, Type, myUser, Status, Store, myTable, IT, SP, Total, ourCust) VALUES (" + invoiceValues + ")";
-                    try(Statement stmt = con.createStatement()) {
-                        int rows = stmt.executeUpdate(query1);
-                        if(rows > 0) {
-                            for(int i = 0; i < items.length(); i++) {
-                                JSONObject item = items.getJSONObject(i);
-                                int Id = getNextIdMain("Invoice_Order_Details");
-                                String values = "'" + Id + "',";
-                                values += "'" + invoiceId + "',";
-                                values += "'0',";
-                                values += "'" + item.getInt("itemId") + "',";
-                                values += "'" + item.getString("itemName") + "',";
-                                values += "'" + item.getDouble("itemPrice") + "',";
-                                values += "'" + item.getInt("qty") * -1 + "',";
-                                values += "'2',";
-                                values += "'5',";
-                                values += "'1'";
-                                String query = "INSERT INTO Invoice_Order_Details "
-                                        + "(ID, Invoice_Order_ID, Parent, DrugID, ModifiedName, Price, Quantity, Supplier, Store, myStat) VALUES (" + values + ")";
-                                try(Statement stmt2 = con.createStatement()) {
-                                    int rows2 = stmt2.executeUpdate(query);
-                                    if(rows2 <= 0) {
-                                        System.out.println("rows2 was not done");
-                                        return false;
-                                    }
-                                    boolean hasExtra = item.getBoolean("hasextra");
-                                    boolean hasadd = item.getBoolean("hasadd");
-                                    boolean hasWithout = item.getBoolean("haswithout");
-                                    if(hasExtra) {
-                                        JSONArray extraItems = item.getJSONArray("extraitems");
-                                        for(int e = 0; e < extraItems.length(); e++) {
-                                            JSONObject ei = extraItems.getJSONObject(e);
-                                            int eID = getNextId("Invoice_Order_Details");
-                                            String queryValues = "'" + eID + "',";
-                                            queryValues += "'" + invoiceId + "',";
-                                            queryValues += "'" + Id + "',";
-                                            queryValues += "'" + ei.getInt("id") + "',";
-                                            queryValues += "'" + ei.getString("name") + "',";
-                                            queryValues += "'" + ei.getDouble("price") + "',";
-                                            queryValues += "'" + ei.getDouble("qty") + "',";
-                                            queryValues += "'2',";
-                                            queryValues += "'5',";
-                                            queryValues += "'1',";
-                                            queryValues += "'"+emenuserver.Types.ChildItemType.EXTRA+"'";
-                                            String extraQuery = "INSERT INTO Invoice_Order_Details "
-                                                    + "(ID, Invoice_Order_ID, Parent, DrugID, ModifiedName, Price, Quantity, Supplier, Store, myStat, ComponentType) VALUES (" + queryValues + ")";
-                                            try(Statement stmt3 = con.createStatement()) {
-                                                stmt3.execute(extraQuery);
-                                                stmt3.close();
-                                            }
-                                        }
-                                    }
-                                    if(hasadd) {
-                                        JSONArray extraItems = item.getJSONArray("addableitems");
-                                        for(int e = 0; e < extraItems.length(); e++) {
-                                            JSONObject ei = extraItems.getJSONObject(e);
-                                            int eID = getNextIdMain("Invoice_Order_Details");
-                                            String queryValues = "'" + eID + "',";
-                                            queryValues += "'" + invoiceId + "',";
-                                            queryValues += "'" + Id + "',";
-                                            queryValues += "'" + ei.getInt("id") + "',";
-                                            queryValues += "'" + ei.getString("name") + "',";
-                                            queryValues += "'" + ei.getDouble("price") + "',";
-                                            queryValues += "'" + ei.getDouble("qty") + "',";
-                                            queryValues += "'2',";
-                                            queryValues += "'5',";
-                                            queryValues += "'1',";
-                                            queryValues += "'"+emenuserver.Types.ChildItemType.OPTIONAL+"'";
-                                            String extraQuery = "INSERT INTO Invoice_Order_Details "
-                                                    + "(ID, Invoice_Order_ID, Parent, DrugID, ModifiedName, Price, Quantity, Supplier, Store, myStat, ComponentType) VALUES (" + queryValues + ")";
-                                            try(Statement stmt3 = con.createStatement()) {
-                                                stmt3.execute(extraQuery);
-                                                stmt3.close();
-                                            }
-                                        }
-                                    }
-                                    if(hasWithout) {
-                                        JSONArray extraItems = item.getJSONArray("withoutitems");
-                                        for(int e = 0; e < extraItems.length(); e++) {
-                                            JSONObject ei = extraItems.getJSONObject(e);
-                                            int eID = getNextIdMain("Invoice_Order_Details");
-                                            String queryValues = "'" + eID + "',";
-                                            queryValues += "'" + invoiceId + "',";
-                                            queryValues += "'" + Id + "',";
-                                            queryValues += "'" + ei.getInt("id") + "',";
-                                            queryValues += "'" + ei.getString("name") + "',";
-                                            queryValues += "'" + ei.getDouble("price") + "',";
-                                            queryValues += "'" + ei.getDouble("qty") + "',";
-                                            queryValues += "'2',";
-                                            queryValues += "'5',";
-                                            queryValues += "'1',";
-                                            queryValues += "'"+emenuserver.Types.ChildItemType.WITHOUT+"'";
-                                            String extraQuery = "INSERT INTO Invoice_Order_Details "
-                                                    + "(ID, Invoice_Order_ID, Parent, DrugID, ModifiedName, Price, Quantity, Supplier, Store, myStat, ComponentType) VALUES (" + queryValues + ")";
-                                            try(Statement stmt3 = con.createStatement()) {
-                                                stmt3.execute(extraQuery);
-                                                stmt3.close();
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            return true;
-                        } else {
-                            System.out.println("rows was not done");
-                            return false;
-                        }
-                    } catch (JSONException ex) {
-                        Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+            Connection con = this.ConnectToMain(); 
+            int mID = this.getMerchentID(dbName);
+            if(mID == -1) System.out.println("Merhcnet ID was not read from db or merchent doesnt exist `" + dbName + "`");
+            int invoiceID = this.getNextInvoiceID(mID);
+            String values = "'" + invoiceID + "'";
+            values += ",'" + mID + "'";
+            values += ",GETDATE()";
+            values += ",'"+ invoiceId + "'";
+            values += ",'" + cost + "'";
+            String query = "INSERT INTO Invoices (ID, MerchentID, Invoice_Date, InvoiceID, InvoiceValue) VALUES (" + values + ")";
+            try(Statement stmt = con.createStatement()) {
+                int rows = stmt.executeUpdate(query);
+                if(rows > 0) {
+                    int paymentID = isPamynetStarted(mID);
+                    if(paymentID != -1) {
+                        this.updatePaymentValue(paymentID, cost);
+                    } else {
+                        this.insertNewPayment(mID, cost);
                     }
+                }
+                return rows > 0;
+            }
         } catch (SQLException ex) {
             Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -1085,7 +980,92 @@ public class eMenuSQL {
         return 1;
     }
     
+    private int getNextInvoiceID(int merchentID) {
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "SELECT MAX(ID) as ID FROM Invoices WHERE MerchentID = '" + merchentID + "'";
+            try(Statement stmt = con.createStatement()) {
+                ResultSet rs = stmt.executeQuery(query);
+                if(rs.next()) {
+                    return rs.getInt("ID") + 1;
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return 1;
+    }
+    private int getNextPaymentID(int merchentID) {
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "SELECT MAX(ID) as ID FROM PaymentRequests WHERE MerchentID = '" + merchentID + "'";
+            try(Statement stmt = con.createStatement()) {
+                ResultSet rs = stmt.executeQuery(query);
+                if(rs.next()) {
+                    return rs.getInt("ID") + 1;
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return 1;
+    }
     
+    private int isPamynetStarted(int merchentID) {
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "SELECT ID FROM PaymentRequests WHERE MerchentID = '" + merchentID + "' AND Paid = 0";
+            try(Statement stmt = con.createStatement()) {
+                ResultSet rs = stmt.executeQuery(query);
+                if(rs.next()) {
+                    return rs.getInt("ID");
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return -1;
+    }
+    
+    public boolean updatePaymentValue(int paymentID, double value) {
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "UPDATE PaymentRequests SET Value = Value + " + value + " WHERE ID = " + paymentID;
+            try(Statement stmt = con.createStatement()) {
+                int rows = stmt.executeUpdate(query);
+                return rows > 0;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+    
+    public boolean insertNewPayment(int merchentID, double value) {
+        try {
+            Connection con = this.ConnectToMain();
+            int ID = getNextPaymentID(merchentID);
+            LocalDate date = LocalDate.now();
+            date = date.with(TemporalAdjusters.next(DayOfWeek.SATURDAY));
+            String values = "'" + ID + "'";
+            values += ",'" + merchentID + "'";
+            values += ",GETDATE()";
+            values += ",'" + date.format(DateTimeFormatter.ISO_DATE) + "'";
+            values += ",'" + value + "'";
+            values += ",'0'";
+            String query = "INSERT INTO PaymentRequests (ID, MerchentID, Request_Date, Payment_Date, Value, Paid) VALUES (" + values + ")";
+            try(Statement stmt = con.createStatement()) {
+                int rows = stmt.executeUpdate(query);
+                return rows > 0;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
     public JSONObject GetCstWithId(int cst)
     {
         try {
@@ -1161,6 +1141,22 @@ public class eMenuSQL {
         }
         
         return "";
+    }
+    
+    public int getMerchentID(String dbName) {
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "SELECT ID FROM dbo.Merchents WHERE DBName = '" + dbName.toLowerCase() + "'";
+            try(Statement stmt = con.createStatement()) {
+                ResultSet rs = stmt.executeQuery(query);
+                if(rs.next()) {
+                    return rs.getInt("ID");
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return -1;
     }
     
     public int getInvoiceCO(int invoiceID)
