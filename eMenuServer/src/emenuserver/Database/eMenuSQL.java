@@ -37,7 +37,7 @@ public class eMenuSQL {
     public Connection ConnectToMain() throws SQLException
     {
         //Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ defaultDBName +";user=sa;password=AbdulRahman02^InsafMousa02^");
-        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=" + defaultDBName + ";user=sa;password=AbdulRahman02^");
+        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=" + defaultDBName + ";user=sa;password=maryam02");
         if(con != null) {
             return con;
         } else {

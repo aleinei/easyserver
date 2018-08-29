@@ -122,7 +122,7 @@ public class PrintOrder {
                 JasperReportBuilder b = report().setTemplate(Templates.reportTemplate).
                     setReportName("امر تشغيل").
                     setDataSource(dataSource).
-                   addColumn(col.column("name", type.stringType()).setTitle("الصنف").setStyle(colStyle)).addColumn(col.column("qty", type.integerType()).
+                   addColumn(col.column("name", type.stringType()).setTitle("الصنف").setStyle(colStyle)).addColumn(col.column("qty", type.doubleType()).
                             setTitle("الكمية").setStyle(colStyle)).
                     setPageFormat(PageType.A7).title(cmp.text("أمر تشغيل").setStyle(titleStyle))
                         .addPageHeader(cmp.text(invoice).setStyle(rightHeaderStyle)).
