@@ -9,6 +9,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Date;
@@ -468,7 +469,7 @@ public class eMenuSQL {
         return null;
     }
 
-    public JSONObject createNewCustomer(String username, String password, String phone, String email, String address1, String address2, String floor, String apt, double lat, double longt) {
+    public JSONObject createNewCustomer(int ID, String username, String password, String phone, String email, String address1, String address2, String floor, String apt, double lat, double longt) {
         JSONObject user = new JSONObject();
         try {
             Connection con = this.Connect();
@@ -483,8 +484,7 @@ public class eMenuSQL {
                     return user;
                 }
                 String completeAddress = "Building number " + address2 + " Floor Number " + floor + ", Apt Number " + apt + " , " + address1; 
-                int Id = getNextId("Customers");
-                String values = "'" + Id + "',";
+                String values = "'" + ID + "',";
                 values += "'1',";
                 values += "'" + username + "',";
                 values += "'" + password + "',";
@@ -1357,5 +1357,49 @@ public class eMenuSQL {
         }
         
         return -1;
+    }
+    
+    public void saveInvoice(MainWindow window, String json) {
+        try {
+            Connection con = this.ConnectToMain();
+            String values = "'" + dbName + "'";
+            values += ",'" + json + "'";
+            String query = "INSERT INTO dbo.SavedInvoices (DBName, InvoiceString) VALUES ("+ values + ")";
+            try(Statement stmt = con.createStatement()) {
+                int rows = stmt.executeUpdate(query);
+            }
+        } catch (SQLException ex) {
+            window.logMessage(ex.getMessage());
+        }
+    }
+    
+    public ArrayList<String> getSavedInvoice(MainWindow window) {
+        ArrayList<String> strings = new ArrayList<>();
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "SELECT * FROM dbo.SavedInvoices WHERE DBName = '" + dbName + "'";
+            try(Statement stmt = con.createStatement()) {
+                ResultSet rs = stmt.executeQuery(query);
+                while(rs.next()) {
+                    strings.add(rs.getString("InvoiceString"));
+                }
+            }
+        } catch (SQLException ex) {
+            window.logMessage(ex.getMessage());
+        }
+        
+        return strings;
+    }
+    
+    public void removeSavedInvoices(MainWindow window) {
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "DELETE FROM dbo.SavedInvoices WHERE DBName = '" + dbName + "'";
+            try(Statement stmt = con.createStatement()) {
+                int rows = stmt.executeUpdate(query);
+            }
+        } catch (SQLException ex) {
+            window.logMessage(ex.getMessage());
+        }
     }
 }
