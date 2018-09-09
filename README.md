@@ -7,5 +7,5 @@
 
 3-  on the main screen show Version No
 
-4-  When client connects show it IP and its Phone Number
+4-  When client connects show it IP and its physical Phone Number
     
