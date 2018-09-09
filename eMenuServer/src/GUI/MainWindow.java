@@ -55,6 +55,15 @@ public class MainWindow extends javax.swing.JFrame {
         connectBtn.doClick();
     }
 
+    public void removeClient(eMenuServerThread client) {
+        for(eMenuServerThread c : clients) {
+            if(c.id.equals(client.id)) {
+                clients.remove(c);
+                logMessage("Client disconnected");
+                break;
+            }
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -339,7 +348,6 @@ public class MainWindow extends javax.swing.JFrame {
             clients.clear();
         }
     }
-    
     public void logMessage(String message) {
         consoleLogText.append(message + "\n");
     }

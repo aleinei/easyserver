@@ -27,7 +27,7 @@ public class eMenuSQL {
     }
     public Connection Connect() throws SQLException {
         //Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ dbName +";user=sa;password=maryam02");
-        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ dbName +";user=sa;password=AbdulRahman02^");
+        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ dbName +";user=sa;password=maryam02");
         if(con != null) {
             return con;
         } else {
@@ -37,7 +37,7 @@ public class eMenuSQL {
     
     public Connection ConnectToMain() throws SQLException
     {
-        //Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ defaultDBName +";user=sa;password=AbdulRahman02^InsafMousa02^");
+        //Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ defaultDBName +";user=sa;password=maryam02");
         Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=" + defaultDBName + ";user=sa;password=maryam02");
         if(con != null) {
             return con;
@@ -394,7 +394,7 @@ public class eMenuSQL {
          return null;
     }
     
-    public JSONObject verifyCustomer(String username, String password) {
+    public JSONObject verifyCustomer(MainWindow window, String username, String password) {
         JSONObject user = new JSONObject();
         try {
             Connection con = this.Connect();
@@ -451,40 +451,48 @@ public class eMenuSQL {
                                 user.put("orders", invoices);
                             }
                         } catch (JSONException ex) {
-                            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+                            window.logMessage(ex.getMessage());
                         }
                     } else {
                         try {
                             user.put("Msg", "user_not_exist");
                         } catch (JSONException ex) {
-                            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+                            window.logMessage(ex.getMessage());
                         }
                     }
                 }
                 return user;
             }
         } catch (SQLException ex) {
-            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+            window.logMessage(ex.getMessage());
         }
         return null;
     }
 
-    public JSONObject createNewCustomer(int ID, String username, String password, String phone, String email, String address1, String address2, String floor, String apt, double lat, double longt) {
+    public JSONObject createNewCustomer(MainWindow window, int ID, String username, String password, String phone, String email, String address1, String address2, String floor, String apt, double lat, double longt, boolean isClient) {
         JSONObject user = new JSONObject();
         try {
             Connection con = this.Connect();
             if(con != null) {
                 if(UserExists(username))
                 {
-                    try {
-                        user.put("Msg", "user_exists");
-                    } catch (JSONException ex) {
-                        Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    return user;
+                    if(!isClient) {
+                        try {
+                            user.put("Msg", "user_exists");
+                        } catch (JSONException ex) {
+                            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        return user;
+                    } else {
+                        String query = "UPDATE dbo.Customers SET Id = " + ID + "WHERE Name = '" + username + "'";
+                        try(Statement stmt = con.createStatement()) {
+                            int rows = stmt.executeUpdate(query);
+                            return null;
+                        }
+                    } 
                 }
                 String completeAddress = "Building number " + address2 + " Floor Number " + floor + ", Apt Number " + apt + " , " + address1; 
-                String values = "'" + ID + "',";
+                String values = "'" + getNextId("Customers") + "',";
                 values += "'1',";
                 values += "'" + username + "',";
                 values += "'" + password + "',";
@@ -503,11 +511,11 @@ public class eMenuSQL {
                     }
                     return user;
                 } catch (JSONException ex) {
-                    Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+                    window.logMessage(ex.getMessage());
                 } 
             }
         } catch (SQLException ex) {
-            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+            window.logMessage(ex.getMessage());
         }
             
         return null;
@@ -1394,9 +1402,55 @@ public class eMenuSQL {
     public void removeSavedInvoices(MainWindow window) {
         try {
             Connection con = this.ConnectToMain();
-            String query = "DELETE FROM dbo.SavedInvoices WHERE DBName = '" + dbName + "'";
+            String query = "DELETE  FROM dbo.SavedInvoices WHERE DBName = '" + dbName + "'";
             try(Statement stmt = con.createStatement()) {
                 int rows = stmt.executeUpdate(query);
+                window.logMessage(String.valueOf(rows) + " deleted from stored users");
+            }
+        } catch (SQLException ex) {
+            window.logMessage(ex.getMessage());
+        }
+    }
+    
+    public void saveUser(MainWindow window, String user) {
+        try {
+            Connection con = this.ConnectToMain();
+            String values = "'" + dbName + "'";
+            values += ",'" + user + "'";
+            String query = "INSERT INTO dbo.SavedUsers (DBName, UserString) VALUES ("+ values + ")";
+            try(Statement stmt = con.createStatement()) {
+                int rows = stmt.executeUpdate(query);
+            }
+        } catch (SQLException ex) {
+            window.logMessage(ex.getMessage());
+        }
+    }
+    
+    public ArrayList<String> getSavedUsers(MainWindow window) {
+                ArrayList<String> strings = new ArrayList<>();
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "SELECT * FROM dbo.SavedUsers WHERE DBName = '" + dbName + "'";
+            try(Statement stmt = con.createStatement()) {
+                ResultSet rs = stmt.executeQuery(query);
+                while(rs.next()) {
+                    strings.add(rs.getString("UserString"));
+                }
+            }
+        } catch (SQLException ex) {
+            window.logMessage(ex.getMessage());
+        }
+        
+        return strings;
+    }
+    
+    public void removeSavedUsers(MainWindow window) {
+                try {
+            Connection con = this.ConnectToMain();
+            String query = "DELETE FROM dbo.SavedUsers WHERE DBName = '" + dbName + "'";
+            try(Statement stmt = con.createStatement()) {
+                int rows = stmt.executeUpdate(query);
+                window.logMessage(String.valueOf(rows) + " deleted from stored users");
             }
         } catch (SQLException ex) {
             window.logMessage(ex.getMessage());
