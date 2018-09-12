@@ -1456,4 +1456,28 @@ public class eMenuSQL {
             window.logMessage(ex.getMessage());
         }
     }
+    
+    public boolean insertNewMerchent(MainWindow log, String mName, String mPhone, String mCity, String type, String sName, double lat, double lng) {
+        try {
+            Connection con = this.ConnectToMain();
+            String values = "'" + lat + "'";
+            values += ",'" + lng + "'";
+            values += ",'" + sName + "'";
+            values += ",'" + mPhone + "'";
+            values += ",'" + type + "'";
+            values += ",'" + mName + "'";
+            values += ",'" + mPhone + "'";
+            values += ",'" + mCity + "'";
+            String query = "INSERT INTO dbo.TempMerchents ( Latitiude, Longtiude, StoreName, StorePhone, StoreType,"
+                    + "OwnerName, OwnerPhone, City) VALUES (" + values + ")";
+            
+            try(Statement stmt = con.createStatement()) {
+                int rows = stmt.executeUpdate(query);
+                return rows > 0;
+            }
+        } catch (SQLException ex) {
+            log.logMessage(ex.getMessage());
+        }
+        return false;
+    }
 }
