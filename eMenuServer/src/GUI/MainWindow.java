@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.text.DefaultCaret;
 public class MainWindow extends javax.swing.JFrame {
 
     /**
@@ -86,7 +87,7 @@ public class MainWindow extends javax.swing.JFrame {
         consoleLogText = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Easy Server");
+        setTitle("Easy Server v1.0");
         setName("Easy Server"); // NOI18N
 
         jLabel1.setText("رقم الاتصال");
@@ -350,6 +351,7 @@ public class MainWindow extends javax.swing.JFrame {
     }
     public void logMessage(String message) {
         consoleLogText.append(message + "\n");
+        consoleLogText.setCaretPosition(consoleLogText.getDocument().getLength());
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel bottomPanel;
