@@ -2,6 +2,18 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+<<<<<<< HEAD
         <group/>
+=======
+        <group>
+<<<<<<< HEAD
+            <file>file:/D:/ESI/Github/easyserver/eMenuServer/src/emenuserver/Database/eMenuSQL.java</file>
+=======
+            <file>file:/D:/ESI/easyserver/eMenuServer/src/emenuserver/EMenuServer.java</file>
+            <file>file:/D:/ESI/easyserver/eMenuServer/src/emenuserver/PrintOrder.java</file>
+            <file>file:/D:/ESI/easyserver/eMenuServer/src/emenuserver/eMenuServerThread.java</file>
+>>>>>>> 380c68e651a55cba73b79ee9e723a67a41d57dcb
+        </group>
+>>>>>>> 615d7fc874791e157ade0fa05f126ce869d75840
     </open-files>
 </project-private>
