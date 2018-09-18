@@ -63,7 +63,7 @@ public class PrintOrder {
         {
             try {
                 JSONObject item = items.getJSONObject(i);
-                String itemSource = item.getString("source");
+                String itemSource = item.getString("Source");
                 if(!Sources.contains(itemSource))
                 {
                     Sources.add(itemSource);
@@ -80,7 +80,7 @@ public class PrintOrder {
             {
                 try {
                     JSONObject item = items.getJSONObject(x);
-                    String itemSource = item.getString("source");
+                    String itemSource = item.getString("Source");
                     if(Sources.get(i).equals(itemSource))
                     {
                         items2.put(item);

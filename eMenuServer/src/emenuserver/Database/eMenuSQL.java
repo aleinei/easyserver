@@ -394,12 +394,12 @@ public class eMenuSQL {
          return null;
     }
     
-    public JSONObject verifyCustomer(MainWindow window, String username, String password) {
+    public JSONObject verifyCustomer(MainWindow window, String phone) {
         JSONObject user = new JSONObject();
         try {
             Connection con = this.Connect();
             if(con != null) {
-                String query = "SELECT * FROM Customers WHERE Name = '" + username + "' AND Password = '" + password + "'";
+                String query = "SELECT * FROM Customers WHERE Telephone = '" + phone + "'";
                 try (Statement stmt = con.createStatement()) {
                     ResultSet rs = stmt.executeQuery(query);
                     if(rs.next()) {
@@ -412,6 +412,7 @@ public class eMenuSQL {
                             user.put("lat", rs.getDouble("Latitude"));
                             user.put("long", rs.getDouble("Longitude"));
                             user.put("pass", rs.getString("Password"));
+                            user.put("name", rs.getString("Name"));
                             try(Statement stmt2 = con.createStatement())
                             {
                                 String query2 = "SELECT ID, Total FROM Invoice_Order WHERE Cust = " + rs.getInt("ID") + " ORDER BY IDate";
@@ -474,7 +475,7 @@ public class eMenuSQL {
         try {
             Connection con = this.Connect();
             if(con != null) {
-                if(UserExists(username))
+                if(UserExists(username) || userPhoneExists(phone))
                 {
                     if(!isClient) {
                         try {
@@ -491,8 +492,9 @@ public class eMenuSQL {
                         }
                     } 
                 }
+                int Id = getNextId("Customers");
                 String completeAddress = "Building number " + address2 + " Floor Number " + floor + ", Apt Number " + apt + " , " + address1; 
-                String values = "'" + getNextId("Customers") + "',";
+                String values = "'" + Id + "',";
                 values += "'1',";
                 values += "'" + username + "',";
                 values += "'" + password + "',";
@@ -506,6 +508,7 @@ public class eMenuSQL {
                     int rowsaffected = stmt.executeUpdate(query);
                     if(rowsaffected != 0) {
                         user.put("Msg", "user_created");
+                        user.put("id", Id);
                     } else {
                         user.put("Msg", "user_failed");
                     }
@@ -1237,6 +1240,25 @@ public class eMenuSQL {
             if(con != null)
             {
                 String query = "SELECT * FROM Customers WHERE Name = '" + username + "'";
+                try(Statement stmt = con.createStatement())
+                {
+                    ResultSet rs = stmt.executeQuery(query);
+                    return rs.next();
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+    
+    public boolean userPhoneExists(String phone)
+    {
+        try {
+            Connection con = this.Connect();
+            if(con != null)
+            {
+                String query = "SELECT * FROM Customers WHERE Telephone = '" + phone + "'";
                 try(Statement stmt = con.createStatement())
                 {
                     ResultSet rs = stmt.executeQuery(query);
