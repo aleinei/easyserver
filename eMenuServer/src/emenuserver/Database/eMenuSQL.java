@@ -27,7 +27,7 @@ public class eMenuSQL {
     }
     public Connection Connect() throws SQLException {
         //Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ dbName +";user=sa;password=maryam02");
-        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ dbName +";user=sa;password=maryam02");
+        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ dbName +";user=sa;password=AbdulRahman02^");
         if(con != null) {
             return con;
         } else {
@@ -38,7 +38,7 @@ public class eMenuSQL {
     public Connection ConnectToMain() throws SQLException
     {
         //Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ defaultDBName +";user=sa;password=maryam02");
-        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=" + defaultDBName + ";user=sa;password=maryam02");
+        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=" + defaultDBName + ";user=sa;password=AbdulRahman02^");
         if(con != null) {
             return con;
         } else {
@@ -1479,5 +1479,28 @@ public class eMenuSQL {
             log.logMessage(ex.getMessage());
         }
         return false;
+    }
+    
+    public JSONArray getAllShops() {
+        JSONArray shops = new JSONArray();
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "SELECT * FROM Merchents";
+            try(Statement stmt = con.createStatement()) {
+                ResultSet rs = stmt.executeQuery(query);
+                while(rs.next()) {
+                    JSONObject shop = new JSONObject();
+                    shop.put("name", rs.getString("StoreName"));
+                    shop.put("dbName", rs.getString("DBName"));
+                    shop.put("type", rs.getInt("StoreType"));
+                    shops.put(shop);
+                }
+            } catch (JSONException ex) {
+                Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return shops;
     }
 }
