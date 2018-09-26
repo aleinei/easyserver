@@ -27,7 +27,7 @@ public class eMenuSQL {
     }
     public Connection Connect() throws SQLException {
         //Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ dbName +";user=sa;password=maryam02");
-        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ dbName +";user=sa;password=AbdulRahman02^");
+        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ dbName +";user=sa;password=maryam02");
         if(con != null) {
             return con;
         } else {
@@ -38,7 +38,7 @@ public class eMenuSQL {
     public Connection ConnectToMain() throws SQLException
     {
         //Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName="+ defaultDBName +";user=sa;password=maryam02");
-        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=" + defaultDBName + ";user=sa;password=AbdulRahman02^");
+        Connection con = DriverManager.getConnection("jdbc:sqlserver://localhost:1433;databaseName=" + defaultDBName + ";user=sa;password=maryam02");
         if(con != null) {
             return con;
         } else {
@@ -397,9 +397,9 @@ public class eMenuSQL {
     public JSONObject verifyCustomer(MainWindow window, String phone) {
         JSONObject user = new JSONObject();
         try {
-            Connection con = this.Connect();
+            Connection con = this.ConnectToMain();
             if(con != null) {
-                String query = "SELECT * FROM Customers WHERE Telephone = '" + phone + "'";
+                    String query = "SELECT * FROM Customers WHERE Telephone = '" + phone + "'";
                 try (Statement stmt = con.createStatement()) {
                     ResultSet rs = stmt.executeQuery(query);
                     if(rs.next()) {
@@ -413,44 +413,6 @@ public class eMenuSQL {
                             user.put("long", rs.getDouble("Longitude"));
                             user.put("pass", rs.getString("Password"));
                             user.put("name", rs.getString("Name"));
-                            try(Statement stmt2 = con.createStatement())
-                            {
-                                String query2 = "SELECT ID, Total FROM Invoice_Order WHERE Cust = " + rs.getInt("ID") + " ORDER BY IDate";
-                                JSONArray invoices = new JSONArray();
-                                ResultSet rs2 = stmt2.executeQuery(query2);
-                                while(rs2.next())
-                                {
-                                    JSONObject invoice = new JSONObject();
-                                    int id = rs2.getInt("ID");
-                                    double total = rs2.getDouble("Total");
-                                    invoice.put("id", id);
-                                    invoice.put("viewed", false);
-                                    if(total > 0)
-                                        invoice.put("delievered", true);
-                                    else
-                                        invoice.put("delievered", false);
-                                    try(Statement stmt3 = con.createStatement())
-                                    {
-                                        String query3 = "SELECT ModifiedName, Price, Quantity FROM Invoice_Order_Details WHERE Invoice_Order_ID = " + id;
-                                        JSONArray items = new JSONArray();
-                                        ResultSet rs3 = stmt3.executeQuery(query3);
-                                        while(rs3.next())
-                                        {
-                                            String name = rs3.getString("ModifiedName");
-                                            double price = rs3.getDouble("Price");
-                                            double qty = rs3.getDouble("Quantity");
-                                            JSONObject item = new JSONObject();
-                                            item.put("name", name);
-                                            item.put("price", price);
-                                            item.put("qty", qty);
-                                            items.put(item);
-                                        }
-                                        invoice.put("items", items);
-                                    }
-                                    invoices.put(invoice);
-                                }
-                                user.put("orders", invoices);
-                            }
                         } catch (JSONException ex) {
                             window.logMessage(ex.getMessage());
                         }
@@ -473,7 +435,7 @@ public class eMenuSQL {
     public JSONObject createNewCustomer(MainWindow window, int ID, String username, String password, String phone, String email, String address1, String address2, String floor, String apt, double lat, double longt, boolean isClient) {
         JSONObject user = new JSONObject();
         try {
-            Connection con = this.Connect();
+            Connection con = this.ConnectToMain();
             if(con != null) {
                 if(UserExists(username) || userPhoneExists(phone))
                 {
@@ -493,7 +455,7 @@ public class eMenuSQL {
                     } 
                 }
                 int Id = getNextId("Customers");
-                String completeAddress = "Building number " + address2 + " Floor Number " + floor + ", Apt Number " + apt + " , " + address1; 
+                String completeAddress = "ع" + address2 + " د" + floor + " ش" + apt + " " + address1;
                 String values = "'" + Id + "',";
                 values += "'1',";
                 values += "'" + username + "',";
@@ -924,7 +886,7 @@ public class eMenuSQL {
     }
     private int getNextId(String tableName) {
         try {
-            Connection con = this.Connect();
+            Connection con = this.ConnectToMain();
             if(con != null) {
                 String query = "SELECT max(Id) as Id FROM  " + tableName;
                 try(Statement stmt = con.createStatement()) {
@@ -1236,7 +1198,7 @@ public class eMenuSQL {
     public boolean UserExists(String username)
     {
         try {
-            Connection con = this.Connect();
+            Connection con = this.ConnectToMain();
             if(con != null)
             {
                 String query = "SELECT * FROM Customers WHERE Name = '" + username + "'";
@@ -1255,7 +1217,7 @@ public class eMenuSQL {
     public boolean userPhoneExists(String phone)
     {
         try {
-            Connection con = this.Connect();
+            Connection con = this.ConnectToMain();
             if(con != null)
             {
                 String query = "SELECT * FROM Customers WHERE Telephone = '" + phone + "'";
@@ -1303,7 +1265,7 @@ public class eMenuSQL {
     public String UpdateUser(String updateType, int userID, JSONObject message)
     {
         try {
-            Connection con = this.Connect();
+            Connection con = this.ConnectToMain();
             if(con != null)
             {
                 String query = "";
@@ -1515,6 +1477,12 @@ public class eMenuSQL {
                     shop.put("name", rs.getString("StoreName"));
                     shop.put("dbName", rs.getString("DBName"));
                     shop.put("type", rs.getInt("StoreType"));
+                    shop.put("name_ar", rs.getString("StoreName_ar"));
+                    shop.put("active", rs.getInt("IsPaid") == 1);
+                    shop.put("lat", rs.getDouble("Latitiude"));
+                    shop.put("long", rs.getDouble("Longtiude"));
+                    shop.put("address", rs.getString("Address"));
+                    shop.put("phone", rs.getString("StorePhone"));
                     shops.put(shop);
                 }
             } catch (JSONException ex) {
@@ -1524,5 +1492,29 @@ public class eMenuSQL {
             Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
         }
         return shops;
+    }
+    
+    public JSONObject getUser(int cstId) {
+        JSONObject user = new JSONObject();
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "SELECT * FROM Customers WHERE ID = " + cstId;
+            try(Statement stmt = con.createStatement()) {
+                ResultSet rs = stmt.executeQuery(query);
+                while(rs.next()) {
+                    user.put("name", rs.getString("name"));
+                    user.put("address", rs.getString("Address1"));
+                    user.put("phone", rs.getString("Telephone"));
+                    user.put("email", rs.getString("E-mail"));
+                    user.put("lati", rs.getDouble("Latitude"));
+                    user.put("long", rs.getDouble("Longitude"));
+                }
+            } catch (JSONException ex) {
+                Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return user;
     }
 }
