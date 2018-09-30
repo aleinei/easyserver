@@ -190,6 +190,7 @@ public class eMenuServerThread extends Thread{
                         msg.put("items", obj.getJSONArray("items"));
                         Timestamp time = new Timestamp(new Date().getTime());
                         msg.put("time", time.getTime());
+                        msg.put("d_time", obj.getString("d_time"));
                         msg.put("takeaway", isTakeAway);
                         msg.put("user", user);
                         if(!sendClientMessage(DBName, msg.toString())) {
