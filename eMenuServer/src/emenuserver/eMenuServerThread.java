@@ -29,6 +29,7 @@ public class eMenuServerThread extends Thread{
     String DBName;
     int StoreType;
     public String id = "none";
+    public String itemsType = "all";
     public eMenuServerThread(Socket socket, MainWindow callerwindow) throws ClassNotFoundException {
         this.serverSocket = socket;
         this.callerWindow = callerwindow;
@@ -109,7 +110,7 @@ public class eMenuServerThread extends Thread{
                             }
                     } else if(obj.getString("Msg").toLowerCase().equals("category_items")) {
                         eMenuSQL SQL = new eMenuSQL(obj.getString("dbName"));
-                        JSONArray items = SQL.getCategoryItems(StoreType);
+                        JSONArray items = SQL.getCategoryItems(callerWindow);
                         if(items != null)
                             out.println(items.toString());
                     } else if(obj.getString("Msg").toLowerCase().equals("unpaid_invoices")) {
@@ -232,6 +233,9 @@ public class eMenuServerThread extends Thread{
                             StoreType = Types.StoreTypes.Store;
                         else if(storeType.equals("storeClient")) {
                             StoreType = Types.StoreTypes.CLIENT;
+                            itemsType = obj.getString("items_type");
+                            eMenuSQL sql = new eMenuSQL(DBName);
+                            sql.updateUsesStocks(callerWindow, DBName, itemsType.equals("stock"));
                         } 
                         else
                             StoreType = Types.StoreTypes.Cafe;

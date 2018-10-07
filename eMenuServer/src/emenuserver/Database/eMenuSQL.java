@@ -153,17 +153,30 @@ public class eMenuSQL {
         return jArray;
     }
     
-    public JSONArray getCategoryItems(int type) throws JSONException {
+    public JSONArray getCategoryItems(MainWindow logger) throws JSONException {
         JSONArray jArray = new JSONArray();
         jArray.put(new JSONObject().put("Msg", "category_items").put("info", "section_Id"));
         try {
         Connection con = this.Connect();
         if(con != null) {
+            boolean type = this.getUsesStocks(logger, dbName);
             String query = "";
-            if(type == emenuserver.Types.StoreTypes.Cafe)
-                query = "SELECT TOP (100) PERCENT dbo.[Trade Names].Source, dbo.[Trade Names].Unit, dbo.[Trade Names].Section , dbo.[Trade Names].Category , dbo.[Trade Names].MaxChildItems, dbo.[Trade Names].Id, dbo.[Trade Names].SortOrder, dbo.[Trade Names].Name, convert(float, dbo.[Trade Names].Price) AS Price FROM dbo.[Trade Names] INNER JOIN dbo.[Drug Section] ON dbo.[Trade Names].Section = dbo.[Drug Section].Id INNER JOIN dbo.Categories ON dbo.[Trade Names].Category = dbo.Categories.Id WHERE (dbo.[Trade Names].Flag in(2,3,5,6)) And ((dbo.[Trade Names].Name IS NOT NULL) OR (dbo.[Trade Names].Name <> N'')) And ((dbo.[Trade Names].BarCode IS NULL) OR (dbo.[Trade Names].BarCode = N'')) And (dbo.[Trade Names].id<>0) Order By dbo.[Trade Names].SortOrder";
+            if(type)
+                query = "SELECT DISTINCT TOP (100) PERCENT [Drug Section].Id, StoreItems.Store, [Drug Section].SortOrder, [Drug Section].Name, "
+                        + "[Drug Section] FROM [Trade Names] INNER JOIN [Drug Section] ON [Trade Names].Section =  [Drug Section].Id INNER JOIN Categories "
+                        + "ON [Trade Names].Category = Categories.Id INNER JOIN StoreItems ON [Trade Names].Id = StoreItems.Item WHERE "
+                        + "(([Drug Section].Name IS Not NULL) OR ([Drug Section].Name<>N'')) AND (([Trade Names].BarCode IS NULL) OR  "
+                        + "([Trade Names].BarCode ='')) AND (StoreItems.Store =5) AND (StoreItems.Balance > 0) And ([Drug Section].Id<>0) And "
+                        + "([Trade Names].InActive=0) And ([Trade Names].Flag<>1) Order By [Drug Section].SortOrder";
             else
-                query = "SELECT [Trade Names].Section, [Trade Names].Category, dbo.[Trade Names].Unit , dbo.[Trade Names].Source, [Trade Names].SortOrder, [Trade Names].Id, dbo.[Trade Names].MaxChildItems, [Trade Names].Name, [Trade Names].Price FROM [Trade Names] INNER JOIN [Drug Section] ON  [Trade Names].Section = [Drug Section].Id INNER JOIN Categories ON [Trade Names].Category =  Categories.Id WHERE ([Trade Names].Name  IS NOT NULL OR [Trade Names].Name <> N'') And ([Trade Names].id<>0) Order By [Trade Names].SortOrder";
+                query = "SELECT DISTINCT TOP (100) PERCENT [Drug Section].Id, StoreItems.Store, [Drug Section].SortOrder, "
+                        + "[Drug Section].Name, FROM [Trade Names] INNER JOIN [Drug Section] ON [Trade Names].Section =  [Drug Section].Id "
+                        + "INNER JOIN Categories ON [Trade Names].Category = Categories.Id INNER JOIN StoreItems ON [Trade Names].Id = StoreItems.Item "
+                        + "WHERE (([Drug Section].Name IS Not NULL) OR ([Drug Section].Name<>N''))" +
+                            "AND (([Trade Names].BarCode IS NULL) OR  ([Trade Names].BarCode =''))" +
+                            "AND (StoreItems.Store =6)" +
+                            "AND (StoreItems.Balance > 0) And ([Drug Section].Id<>0)" +
+                            "And ([Trade Names].InActive=0) And ([Trade Names].Flag<>1) Order By [Drug Section].SortOrder";
             System.out.println(type + "");
             try (Statement stmt = con.createStatement()) {
                 ResultSet rs = stmt.executeQuery(query);
@@ -197,7 +210,7 @@ public class eMenuSQL {
         }
         } catch (SQLException e) {
             System.out.println("Error in getting data from database");
-            e.printStackTrace();
+            logger.logMessage(e.getMessage());
         }
         
         return jArray;
@@ -1516,5 +1529,33 @@ public class eMenuSQL {
             Logger.getLogger(eMenuSQL.class.getName()).log(Level.SEVERE, null, ex);
         }
         return user;
+    }
+    
+    public void updateUsesStocks(MainWindow logger, String dbName, boolean usesStock) {
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "UPDATE Merchents SET UsesStocks = '" + (usesStock ? String.valueOf(1) : String.valueOf(0)) + "' WHERE DBName = '" + dbName+"'";
+            try(Statement stmt = con.createStatement()) {
+                stmt.execute(query);
+            }
+        } catch (SQLException ex) {
+            logger.logMessage(ex.getMessage());
+        }
+    }
+    
+    public boolean getUsesStocks(MainWindow logger, String dbName) {
+        try {
+            Connection con = this.ConnectToMain();
+            String query = "SELECT UsesStocks FROM Merchents WHERE DBName = '" + dbName + "'";
+            try(Statement stmt = con.createStatement()) {
+                ResultSet rs = stmt.executeQuery(query);
+                if(rs.next()) {
+                    return rs.getBoolean("UsesStocks");
+                }
+            }
+        } catch (SQLException ex) {
+            logger.logMessage(ex.getMessage());
+        }
+        return false;
     }
 }
