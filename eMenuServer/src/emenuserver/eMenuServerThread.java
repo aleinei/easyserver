@@ -53,7 +53,7 @@ public class eMenuServerThread extends Thread{
                       }
                     } else if(obj.getString("Msg").toLowerCase().equals("all_sections")) {
                         eMenuSQL SQL = new eMenuSQL(obj.getString("dbName"));
-                        JSONArray categories = SQL.getSections(StoreType);
+                        JSONArray categories = SQL.getSections(callerWindow, StoreType);
                         if(categories.length() > 0) {
                             out.println(categories.toString());
                             callerWindow.logMessage(categories.toString());
@@ -68,12 +68,12 @@ public class eMenuServerThread extends Thread{
 
                     } else if(obj.getString("Msg").toLowerCase().equals("section_categories")) {
                        eMenuSQL SQL = new eMenuSQL(obj.getString("dbName"));
-                       JSONArray categories = SQL.getCategories(StoreType);
+                       JSONArray categories = SQL.getCategories(callerWindow, StoreType);
                        out.println(categories.toString());
                     } else if(obj.getString("Msg").toLowerCase().equals("section_categories_id")) {
                        eMenuSQL SQL = new eMenuSQL(DBName);
                        int id = obj.getInt("section_id");
-                       JSONArray categories = SQL.getCategories(id);
+                       JSONArray categories = SQL.getCategories(callerWindow, id);
                        out.println(categories.toString());
                     }else if(obj.getString("Msg").toLowerCase().equals("new_order")) {
                         JSONObject order_details = obj.getJSONObject("order");

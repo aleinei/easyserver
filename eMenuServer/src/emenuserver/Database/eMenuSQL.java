@@ -94,26 +94,30 @@ public class eMenuSQL {
         return jArray;
     }
     
-    public JSONArray getSections(int type) throws JSONException {
+    public JSONArray getSections(MainWindow logger, int type) throws JSONException {
           JSONArray jArray = new JSONArray();
         jArray.put(new JSONObject().put("Msg", "all_sections").put("info", "null"));
         try {
         Connection con = this.Connect();
         if(con != null) {
             String query;
-            if(type == emenuserver.Types.StoreTypes.Cafe) {
-                query = "SELECT DISTINCT TOP (100) PERCENT dbo.[Drug Section].Id, dbo.[Drug Section].SortOrder, dbo.[Drug Section].Name FROM dbo.[Trade Names] INNER JOIN dbo.[Drug Section] ON dbo.[Trade Names].Section = dbo.[Drug Section].Id INNER JOIN dbo.Categories ON dbo.[Trade Names].Category = dbo.Categories.Id WHERE ((dbo.[Drug Section].Name IS Not NULL) OR (dbo.[Drug Section].Name<>N'')) AND (dbo.[Trade Names].Flag in(2,3,5,6)) AND ((dbo.[Trade Names].BarCode IS NULL) OR (dbo.[Trade Names].BarCode=N'')) AND (dbo.[Drug Section].Id<>0) Order By dbo.[Drug Section].SortOrder";
+            boolean stocks = this.getUsesStocks(logger, dbName);
+            if(stocks) {
+                query = "SELECT DISTINCT TOP (100) PERCENT [Drug Section].Id, [Drug Section].Name, [Drug Section].SortOrder FROM [Trade Names] INNER JOIN [Drug Section] ON [Trade Names].Section = [Drug Section].Id INNER JOIN Categories ON [Trade Names].Category = Categories.Id INNER JOIN StoreItems ON [Trade Names].Id = StoreItems.Item WHERE ([Trade Names].BarCode IS NULL OR [Trade Names].BarCode = '')  AND  ([Drug Section].Name IS NOT NULL OR [Drug Section].Name <> N'') AND  ([Drug Section].Id <> 0) AND ([Trade Names].InActive=0)  AND ([Trade Names].Flag<>1)  AND (StoreItems.Balance > 0)  Order By [Drug Section].SortOrder";
             } else {
-                query = "SELECT DISTINCT TOP (100) PERCENT dbo.[Drug Section].Id, dbo.[Drug Section].SortOrder, dbo.[Drug Section].Name FROM dbo.[Trade Names] INNER JOIN dbo.[Drug Section] ON dbo.[Trade Names].Section = dbo.[Drug Section].Id INNER JOIN dbo.Categories ON dbo.[Trade Names].Category = dbo.Categories.Id WHERE ((dbo.[Drug Section].Name IS Not NULL) OR (dbo.[Drug Section].Name<>N'')) AND (dbo.[Trade Names].Flag in(1,2,3,5,6)) AND ((dbo.[Trade Names].BarCode IS NULL) OR (dbo.[Trade Names].BarCode=N'')) AND (dbo.[Drug Section].Id<>0) Order By dbo.[Drug Section].SortOrder";
+                query = "SELECT DISTINCT TOP (100) PERCENT [Drug Section].Id, [Drug Section].SortOrder, [Drug Section].Name  FROM [Trade Names] INNER JOIN [Drug Section] ON [Trade Names].Section = [Drug Section].Id INNER JOIN  Categories ON [Trade Names].Category = Categories.Id  WHERE (([Drug Section].Name IS Not NULL) OR ([Drug Section].Name<>N'')) AND (([Trade Names].BarCode IS NULL) OR ([Trade Names].BarCode=N'')) And ([Trade Names].[InActive]=0) And ([Trade Names].[Flag]<>1) And ([Drug Section].Id<>0) Order By [Drug Section].SortOrder";
             }
             try (Statement stmt = con.createStatement()) {
                 ResultSet rs = stmt.executeQuery(query);
+                int count = 0;
                 while(rs.next()) {
                     JSONObject json = new JSONObject();
-                    json.put("section_name", rs.getString("name"));
+                    json.put("section_name", rs.getString("Name"));
                     json.put("section_id", rs.getInt("Id"));
                     jArray.put(json);
+                    count++;
                 }
+                logger.logMessage("Sent " + count);
                 con.close();
             }
         }
@@ -124,19 +128,21 @@ public class eMenuSQL {
         
     }
     
-    public JSONArray getCategories(int type) throws JSONException, SQLException {
+    public JSONArray getCategories(MainWindow logger, int type) throws JSONException, SQLException {
         JSONArray jArray = new JSONArray();
         jArray.put(new JSONObject().put("Msg", "section_categories").put("info", ""));
         try {
             Connection con = this.Connect();
             String query = "";
-            if(type == emenuserver.Types.StoreTypes.Cafe)
-                query = "SELECT DISTINCT TOP (100) PERCENT dbo.Categories.Id, dbo.[Trade Names].Section, dbo.Categories.SortOrder, dbo.Categories.Name FROM dbo.[Trade Names] INNER JOIN dbo.[Drug Section] ON dbo.[Trade Names].Section = dbo.[Drug Section].Id INNER JOIN dbo.Categories ON dbo.[Trade Names].Category = dbo.Categories.Id WHERE (dbo.[Trade Names].Flag in(2,3,5,6)) And ((dbo.[Categories].[Name] Is Not Null) Or  (dbo.[Categories].[Name]<>N'' ) ) AND (dbo.[Trade Names].BarCode IS NULL OR dbo.[Trade Names].BarCode = N'') AND (dbo.Categories.Id<>0) ORDER BY dbo.Categories.SortOrder";
+            boolean stocks = this.getUsesStocks(logger, dbName);
+            if(stocks)
+                query = "SELECT DISTINCT TOP (100) PERCENT [Trade Names].Section , Categories.Id, Categories.SortOrder, Categories.Name FROM [Trade Names] INNER JOIN [Drug Section] ON [Trade Names].Section = [Drug Section].Id INNER JOIN Categories ON [Trade Names].Category = Categories.Id INNER JOIN StoreItems ON [Trade Names].Id = StoreItems.Item WHERE ([Trade Names].BarCode IS NULL OR [Trade Names].BarCode = '') AND (Categories.Name IS NOT NULL OR Categories.Name <> N'') AND (Categories.Id <> 0) AND ([Trade Names].InActive=0)  AND ([Trade Names].Flag<>1) AND (StoreItems.Balance > 0) ORDER BY Categories.SortOrder";
             else
-                query = "SELECT DISTINCT TOP (100) PERCENT dbo.[Trade Names].Section, Categories.Id, Categories.SortOrder, Categories.Name FROM [Trade Names]  INNER JOIN [Drug Section] ON [Trade Names].Section = [Drug Section].Id INNER JOIN Categories  ON [Trade Names].Category = Categories.Id WHERE ((Categories.Name IS NOT NULL) OR (Categories.Name <> N'')) AND (Categories.Id<>0) ORDER BY Categories.SortOrder";
+                query = "SELECT DISTINCT TOP (100) PERCENT [Trade Names].Section , Categories.Id, Categories.SortOrder, Categories.Name FROM [Trade Names]  INNER JOIN [Drug Section] ON [Trade Names].Section = [Drug Section].Id INNER JOIN Categories  ON [Trade Names].Category = Categories.Id WHERE ((Categories.Name IS NOT NULL) OR (Categories.Name <> N'')) AND (([Trade Names].BarCode IS NULL) OR ([Trade Names].BarCode=N'')) And ([Trade Names].[InActive]=0) And ([Trade Names].[Flag]<>1) AND (Categories.Id<>0) ORDER BY Categories.SortOrder";
             System.out.println(type + "");
             try(Statement stmt = con.createStatement()) {
                 ResultSet rs = stmt.executeQuery(query);
+                int count = 0;
                 while(rs.next()) {
                     int category_id = rs.getInt("Id");
                     JSONObject category_object = new JSONObject();
@@ -144,10 +150,13 @@ public class eMenuSQL {
                     category_object.put("Id", category_id);
                     category_object.put("Name", rs.getString("Name"));
                     jArray.put(category_object);
+                    count++;
                 }
+                logger.logMessage("Sent " + count);
             }
         } catch (SQLException e ) {
             System.out.println("Error in getting data " + e);
+            logger.logMessage(e.getMessage());
         }
         
         return jArray;
@@ -162,25 +171,15 @@ public class eMenuSQL {
             boolean type = this.getUsesStocks(logger, dbName);
             String query = "";
             if(type)
-                query = "SELECT DISTINCT TOP (100) PERCENT [Drug Section].Id, StoreItems.Store, [Drug Section].SortOrder, [Drug Section].Name, "
-                        + "[Drug Section] FROM [Trade Names] INNER JOIN [Drug Section] ON [Trade Names].Section =  [Drug Section].Id INNER JOIN Categories "
-                        + "ON [Trade Names].Category = Categories.Id INNER JOIN StoreItems ON [Trade Names].Id = StoreItems.Item WHERE "
-                        + "(([Drug Section].Name IS Not NULL) OR ([Drug Section].Name<>N'')) AND (([Trade Names].BarCode IS NULL) OR  "
-                        + "([Trade Names].BarCode ='')) AND (StoreItems.Store =5) AND (StoreItems.Balance > 0) And ([Drug Section].Id<>0) And "
-                        + "([Trade Names].InActive=0) And ([Trade Names].Flag<>1) Order By [Drug Section].SortOrder";
+                query = "SELECT TOP (100) PERCENT [Trade Names].Id, [Trade Names].Name, [Trade Names].Price, [Trade Names].Unit, [Trade Names].Section, [Trade Names].MaxChildItems, [Trade Names].Source, [Trade Names].Category, [Trade Names].SortOrder, SUM(DISTINCT StoreItems.Balance) AS Balance FROM [Trade Names] INNER JOIN [Drug Section] ON [Trade Names].Section = [Drug Section].Id INNER JOIN Categories ON [Trade Names].Category = Categories.Id INNER JOIN StoreItems ON [Trade Names].Id = StoreItems.Item WHERE ([Trade Names].BarCode IS NULL OR [Trade Names].BarCode = '') AND ([Trade Names].InActive = 0) AND ([Trade Names].Flag <> 1) GROUP BY [Trade Names].Unit, [Trade Names].Section, [Trade Names].MaxChildItems, [Trade Names].Source, [Trade Names].Category, [Trade Names].SortOrder, [Trade Names].Id, [Trade Names].Name, [Trade Names].Price HAVING ([Trade Names].Name IS NOT NULL OR [Trade Names].Name <> N'') AND (SUM(DISTINCT StoreItems.Balance) > 0)ORDER BY [Trade Names].SortOrder";
             else
-                query = "SELECT DISTINCT TOP (100) PERCENT [Drug Section].Id, StoreItems.Store, [Drug Section].SortOrder, "
-                        + "[Drug Section].Name, FROM [Trade Names] INNER JOIN [Drug Section] ON [Trade Names].Section =  [Drug Section].Id "
-                        + "INNER JOIN Categories ON [Trade Names].Category = Categories.Id INNER JOIN StoreItems ON [Trade Names].Id = StoreItems.Item "
-                        + "WHERE (([Drug Section].Name IS Not NULL) OR ([Drug Section].Name<>N''))" +
-                            "AND (([Trade Names].BarCode IS NULL) OR  ([Trade Names].BarCode =''))" +
-                            "AND (StoreItems.Store =6)" +
-                            "AND (StoreItems.Balance > 0) And ([Drug Section].Id<>0)" +
-                            "And ([Trade Names].InActive=0) And ([Trade Names].Flag<>1) Order By [Drug Section].SortOrder";
+                query = "SELECT [Trade Names].Section, [Trade Names].Unit, [Trade Names].Category, [Trade Names].MaxChildItems, [Trade Names].Source, [Trade Names].SortOrder, [Trade Names].Id,  [Trade Names].Name, [Trade Names].Price  FROM [Trade Names] INNER JOIN [Drug Section] ON [Trade Names].Section = [Drug Section].Id INNER JOIN Categories ON [Trade Names].Category = Categories.Id WHERE (([Trade Names].Name IS NOT NULL OR  [Trade Names].Name <> N'') AND ([Trade Names].BarCode IS NULL OR [Trade Names].BarCode = N'')) And ([Trade Names].[InActive]=0) And ([Trade Names].[Flag]<>1) And ([Trade Names].id<>0) Order By [Trade Names].SortOrder";
+            
             System.out.println(type + "");
             try (Statement stmt = con.createStatement()) {
                 ResultSet rs = stmt.executeQuery(query);
                 JSONArray items = new JSONArray();
+                int count = 0;
                 while(rs.next()) {
                     JSONObject json = new JSONObject();
                     json.put("section_id", rs.getInt("Section"));
@@ -203,7 +202,9 @@ public class eMenuSQL {
                         }
                     }
                     items.put(json);
+                    count++;
                 }
+                logger.logMessage("sent : " + count);
                 jArray.put(items);
             }
             con.close();
